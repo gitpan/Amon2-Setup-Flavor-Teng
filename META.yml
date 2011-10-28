@@ -22,4 +22,4 @@ requires:
   DBD::SQLite: 1.33
   Teng: 0.12
   perl: 5.008001
-version: 0.01
+version: 0.02
