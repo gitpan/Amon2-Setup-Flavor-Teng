@@ -4,7 +4,7 @@ use utf8;
 
 package Amon2::Setup::Flavor::Teng;
 use parent qw(Amon2::Setup::Flavor);
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 sub run {
     my $self = shift;
@@ -30,29 +30,42 @@ sub setup_schema {
     open my $fh, '<:encoding(UTF-8)', $fname or die "$fname: $!";
     my $source = do { local $/; <$fh> };
     for my $stmt (split /;/, $source) {
+        next unless $stmt =~ /\S/;
         $dbh->do($stmt) or die $dbh->errstr();
     }
 }
 
 use Teng;
 use Teng::Schema::Loader;
+use <% $module %>::DB;
+my $schema;
 sub db {
     my $self = shift;
     if ( !defined $self->{db} ) {
         my $conf = $self->config->{'DBI'}
         or die "missing configuration for 'DBI'";
         my $dbh = DBI->connect(@{$conf});
-        my $schema = Teng::Schema::Loader->load(
+        $schema ||= Teng::Schema::Loader->load(
             namespace => '<% $module %>::DB',
             dbh       => $dbh,
 	    );
-        $self->{db} = Teng->new(
+        $self->{db} = <% $module %>::DB->new(
             dbh    => $dbh,
             schema => $schema,
 	    );
     }
     return $self->{db};
 }
+
+1;
+...
+
+    $self->write_file('lib/<<PATH>>/DB.pm', <<'...');
+package <% $module %>::DB;
+use strict;
+use warnings;
+use utf8;
+use parent qw(Teng);
 
 1;
 ...
@@ -68,7 +81,8 @@ my $dbi = DBI->connect('dbi:SQLite:dbname=db/development.db');
 $dbi->do("create table if not exists sessions (id char(72) primary key, session_data text)") or die $dbi->errstr;
 my $teng = <% $module %>->new;
 is(ref $teng, '<% $module %>', 'instance');
-is(ref $teng->db, 'Teng', 'instance');
+isa_ok($teng->db, 'Teng', 'instance');
+isa_ok($teng->db, '<% $module %>::DB', 'instance');
 $teng->db->insert('sessions', { id => 'abcdefghijklmnopqrstuvwxyz', session_data => 'ka2u' });
 my $res = $teng->db->single('sessions', { id => 'abcdefghijklmnopqrstuvwxyz' });
 is($res->get_column('session_data'), 'ka2u', 'search');
