@@ -4,7 +4,7 @@ use utf8;
 
 package Amon2::Setup::Flavor::Teng;
 use parent qw(Amon2::Setup::Flavor);
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 sub run {
     my $self = shift;
@@ -45,14 +45,18 @@ sub db {
         my $conf = $self->config->{'DBI'}
         or die "missing configuration for 'DBI'";
         my $dbh = DBI->connect(@{$conf});
-        $schema ||= Teng::Schema::Loader->load(
-            namespace => '<% $module %>::DB',
-            dbh       => $dbh,
+        if ( !defined $schema ) {
+            $self->{db} = Teng::Schema::Loader->load(
+                namespace => '<% $module %>::DB',
+                dbh       => $dbh,
 	    );
-        $self->{db} = <% $module %>::DB->new(
-            dbh    => $dbh,
-            schema => $schema,
+            $schema = $self->{db}->schema;
+        } else {
+            $self->{db} = <% $module %>::DB->new(
+                dbh    => $dbh,
+                schema => $schema,
 	    );
+        }
     }
     return $self->{db};
 }
