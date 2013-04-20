@@ -4,7 +4,7 @@ use utf8;
 
 package Amon2::Setup::Flavor::Teng;
 use parent qw(Amon2::Setup::Flavor);
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 sub run {
     my $self = shift;
@@ -15,7 +15,6 @@ use strict;
 use warnings;
 use utf8;
 use parent qw/Amon2/;
-our $VERSION='0.01';
 use 5.008001;
 
 __PACKAGE__->load_plugin(qw/DBI/);
